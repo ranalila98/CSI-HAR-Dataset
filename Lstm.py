@@ -9,9 +9,13 @@ from keras.layers import Dense
 from keras.layers import Flatten
 from keras.layers import Dropout
 from keras.layers import TimeDistributed
-from keras.layers.convolutional import Conv1D
+# from keras.layers.convolutional import Conv1D
+from tensorflow.keras.layers import Conv1D
+
 from keras.layers import LSTM
-from keras.layers.convolutional import MaxPooling1D
+# from keras.layers.convolutional import MaxPooling1D
+from tensorflow.keras.layers import MaxPooling1D
+
 from keras.layers import BatchNormalization
 from keras.utils import to_categorical
 import numpy as np 
@@ -21,7 +25,7 @@ import os
 import csv
 from keras.optimizers import Adam, Nadam, SGD
 from keras import regularizers
-from keras.layers.advanced_activations import LeakyReLU
+from tensorflow.keras.layers import LeakyReLU
 from tensorflow_addons.optimizers import CyclicalLearningRate
 
 class CSIModelConfig:

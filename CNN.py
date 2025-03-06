@@ -1,4 +1,3 @@
-
 from keras.models import Sequential
 from keras.layers import Convolution2D
 from keras.layers import MaxPooling2D
@@ -6,7 +5,7 @@ from keras.layers import Flatten
 from keras.layers import Dense
 import keras.metrics as metrics
 from keras.layers import AveragePooling2D
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.layers import BatchNormalization
 from keras.layers import Dropout
 from sklearn.metrics import classification_report
@@ -14,74 +13,66 @@ from keras.optimizers import Adam
 import numpy as np
 import tensorflow as tf
 from keras import regularizers
-from keras.layers.advanced_activations import LeakyReLU
+from tensorflow.keras.layers import LeakyReLU
+from sklearn.metrics import confusion_matrix, accuracy_score
 
-path_drive = 'P://fm//py//images'
+import os
+
+path_drive = 'E:\CSI-HAR\generated images'
 
 # Initialising the CNN
 Classifier = Sequential()
-# Step 1 - Convolution
-Classifier.add(Convolution2D(32, 3, 3, input_shape = (64,64,3)))
-Classifier.add(LeakyReLU(alpha=0.1))
-# Classifier.add(BatchNormalization()) #no need
 
-# Step 2 - Pooling
-Classifier.add(MaxPooling2D(pool_size = (2,2)))
+# Step 1 - First Convolution + Pooling
+Classifier.add(Convolution2D(32, (3, 3), input_shape=(64, 64, 3)))
+Classifier.add(LeakyReLU(alpha=0.1))
+Classifier.add(BatchNormalization())
+Classifier.add(MaxPooling2D(pool_size=(2, 2)))
 Classifier.add(Dropout(0.25))
 
-# Classifier.add(Dense(64, activation= 'relu'))
-# # second layer
-Classifier.add(Convolution2D(64, 3, 3))
+# Step 2 - Second Convolution + Pooling
+Classifier.add(Convolution2D(64, (3, 3)))
 Classifier.add(LeakyReLU(alpha=0.1))
-# Classifier.add(BatchNormalization())
-Classifier.add(MaxPooling2D(pool_size = (2,2)))
-# Classifier.add(Dropout(0.5))
+Classifier.add(BatchNormalization())
+Classifier.add(MaxPooling2D(pool_size=(2, 2)))
+Classifier.add(Dropout(0.5))
 
-# Classifier.add(Dense(64,input_dim = 64,
-#                      kernel_regularizer = regularizers.l2(0.00001),
-#                      activity_regularizer = regularizers.l1(0.00001)))
-
-# #third layer
-# Classifier.add(Convolution2D(32, 3, 3, activation = 'relu'))
-# #Classifier.add(BatchNormalization())
-# Classifier.add(MaxPooling2D(pool_size = (2,2)))
+# # Step 3 - Third Convolution + Pooling 
+# Classifier.add(Convolution2D(32, (3, 3), activation='relu'))
+# Classifier.add(MaxPooling2D(pool_size=(2, 2)))
 # Classifier.add(Dropout(0.25))
 
-#forth layer
-# Classifier.add(Convolution2D(32, 3, 3, activation = 'relu'))
-# #Classifier.add(BatchNormalization())
-# Classifier.add(MaxPooling2D(pool_size = (2,2)))
+# # Step 4 - Fourth Convolution + Pooling 
+# Classifier.add(Convolution2D(32, (3, 3), activation='relu'))
+# Classifier.add(MaxPooling2D(pool_size=(2, 2)))
 
-
-# Step 3 - Flattening
+# Step 5 - Flattening
 Classifier.add(Flatten())
 
-# Step 4 - Full connection
-#output_dim = 128
-
-Classifier.add(Dense( 128, activation = 'linear'))
-Classifier.add(Dropout(0.1,name='Dropout_Regularization')) #dropout=1 for fixing last epoch fluctuation
-Classifier.add(Dense( 7, activation = 'softmax'))
+# Step 6 - Fully Connected Layers
+Classifier.add(Dense(128, activation='linear'))
+Classifier.add(Dropout(0.1, name='Dropout_Regularization'))
+Classifier.add(Dense(7, activation='softmax'))
 
 # Compiling the CNN
-opt = Adam(lr=0.0001)
-Classifier.compile(optimizer = opt, loss = 'categorical_crossentropy',
-                   metrics=['accuracy'])
+opt = Adam(learning_rate=0.0001)
+Classifier.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+
 
 
 # Part 2 - Fitting the CNN to the images
  
-
 train_datagen = ImageDataGenerator( featurewise_center=False)
 
 test_datagen = ImageDataGenerator( featurewise_center=False)
 
 
-
+# 'lie down','fall','bend', 'run', 'sitdown','standup','walk'
+#'bend','fall', 'lie down', 'run', 'sitdown', 'standup', 'walk'
 train_set = train_datagen.flow_from_directory(path_drive + '//Train',
                                               target_size=(64,64),
                                                   color_mode="rgb",
-                                                  classes=['lie down','fall','bend', 'run', 'sitdown','standup','walk'],
+                                                  classes=['bend','fall', 'lie down', 'run', 'sitdown', 'standup', 'walk'],
                                                   class_mode="categorical",
                                                   batch_size=32,
                                                   shuffle=False,
@@ -94,13 +85,10 @@ train_set = train_datagen.flow_from_directory(path_drive + '//Train',
                                                   interpolation="nearest")
 
 
-
-
-
 test_set = test_datagen.flow_from_directory( path_drive + '//Test',
                                             target_size=(64,64),
                                             color_mode="rgb",
-                                            classes=['lie down','fall','bend', 'run', 'sitdown','standup','walk'],
+                                            classes=['bend','fall', 'lie down', 'run', 'sitdown', 'standup', 'walk'],
                                             class_mode="categorical",
                                             batch_size=32,
                                             shuffle=False,
@@ -118,12 +106,10 @@ from keras.callbacks import ModelCheckpoint
 checkpoint = ModelCheckpoint("model_weights.h5",monitor='val_accuracy',verbose=1,save_best_only=True,mode='max')
 callbacks_list=[checkpoint]
 
-history = Classifier.fit_generator(train_set,
+history = Classifier.fit(train_set,
                                      epochs = 150,
                                      validation_data = test_set,
                                      callbacks=[checkpoint])
-
-
 
 
 #Save and serialize model structure to JSON
@@ -152,14 +138,16 @@ plt.show()
 # show the confusion matrix of our predictions
 
 # compute predictions
-predictions = Classifier.predict_generator(generator=test_set)
+predictions = Classifier.predict(test_set, steps=len(test_set), verbose=1)
+
 y_pred = [np.argmax(probas) for probas in predictions]
 y_test = test_set.classes
+acc = accuracy_score(y_test, y_pred)
+print(acc)
 class_names = test_set.class_indices.keys()
 
 from sklearn.metrics import confusion_matrix
 import itertools
-
 
 def plot_confusion_matrix(cm, classes, title='Confusion matrix', cmap=plt.cm.Blues):
     cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
@@ -182,7 +170,6 @@ def plot_confusion_matrix(cm, classes, title='Confusion matrix', cmap=plt.cm.Blu
     plt.xlabel('Predicted label')
     plt.tight_layout()
 
-
 # compute confusion matrix
 cnf_matrix = confusion_matrix(y_test, y_pred)
 np.set_printoptions(precision=2)
@@ -193,3 +180,6 @@ plot_confusion_matrix(cnf_matrix, classes=class_names, title='Normalized confusi
 plt.show()
 
 Classifier.summary()
+
+
+

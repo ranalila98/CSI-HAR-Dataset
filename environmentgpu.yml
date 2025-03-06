@@ -1,4 +1,13 @@
-name: gpu
+name: CSIHAR
 channels:
   - defaults
-prefix: C:\Users\omen 15\anaconda3\envs\gpu
+dependencies:
+  - python=3.8.12
+  - cudatoolkit=11.3.1
+  - cudnn=8.2.1
+  - tensorflow
+  - keras
+  - numpy
+  - matplotlib
+  - pandas
+
